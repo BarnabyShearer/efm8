@@ -26,7 +26,7 @@ setup(
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 3"
     ],
-    requires=[
+    install_requires=[
         'hidapi>=0.7.99.post21',
         'PyCRC>=1.21'
     ]

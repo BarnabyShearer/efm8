@@ -52,7 +52,10 @@ def read_flash(manufacturer, product, serial):
                 print("%fkB" % (addr / 0x400))
                 sys.stdout.flush()
             for test in range(0x100):
-                dev.send_feature_report([0] + efm8.create_frame(efm8.VERIFY, efm8.toaddr(addr) + efm8.toaddr(addr) + efm8.crc([test])))
+                dev.send_feature_report([0] + efm8.create_frame(
+                    efm8.VERIFY,
+                    efm8.toaddr(addr) + efm8.toaddr(addr) + efm8.crc([test])
+                ))
                 if dev.get_feature_report(0, 2)[-1] == 64:
                     buf.append(test)
                     break
@@ -67,7 +70,13 @@ def write_hex(buf, filename):
         for addr in range(0, SIZE, 16):
             output.write(":10{:04X}00".format(addr))
             output.write("".join("{:02X}".format(c) for c in buf[addr:addr + 16]))
-            output.write("{:02X}\n".format(efm8.twos_complement(sum([0x10] + efm8.toaddr(addr) + buf[addr:addr + 16]) & 0xFF)))
+            output.write(
+                "{:02X}\n".format(
+                    efm8.twos_complement(
+                        sum([0x10] + efm8.toaddr(addr) + buf[addr:addr + 16]) & 0xFF
+                    )
+                )
+            )
         output.write(":00000001FF\n")
 
 def main():

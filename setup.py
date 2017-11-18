@@ -7,7 +7,7 @@ with open(path.join(path.abspath(path.dirname(__file__)), 'README.rst')) as f:
 
 setup(
     name="efm8",
-    version="0.0.1",
+    version="0.0.2",
     description="Flash via AN945: EFM8 Factory Bootloader HID",
     long_description=long_description,
     author="Barnaby Shearer",
@@ -17,7 +17,8 @@ setup(
     keywords="EFM8 AN945 HID Bootloader",
     scripts=[
         "efm8.py",
-        "u2fzero.py"
+        "u2fzero.py",
+        "efm8_read.py"
     ],
     classifiers=[
         "Development Status :: 5 - Production/Stable",

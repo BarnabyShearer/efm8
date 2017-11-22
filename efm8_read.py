@@ -79,12 +79,15 @@ def write_hex(buf, filename):
             )
         output.write(":00000001FF\n")
 
-def main():
-    """Command line"""
+def _parser():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-s", "--serial", help="Serial number of device to program")
     parser.add_argument("firmware", help="Intel Hex format file to flash")
-    args = parser.parse_args()
+    return parser
+
+def main():
+    """Command line"""
+    args = _parser().parse_args()
     write_hex(
         read_flash(
             0x10C4,

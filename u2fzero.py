@@ -23,7 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Reset a zeroU2F and flash"""
+"""Reset a `U2F ZERO <https://www.u2fzero.com/>`__ and flashs a new firmware."""
 
 from __future__ import print_function
 import os
@@ -38,7 +38,7 @@ U2F_CONFIG_BOOTLOADER = 0x88
 USBDEVFS_RESET = ord("U") << (4*2) | 20
 
 def reset(manufacturer, product, serial):
-    """Send zeroU2F jump to bootloader cmd"""
+    """Send zeroU2F jump to bootloader command, then triggers the host to see the device change."""
     #pylint: disable-msg=no-member
     with contextlib.closing(hid.device()) as dev:
         if hasattr(serial, "decode"):
@@ -64,12 +64,15 @@ def reset(manufacturer, product, serial):
             os.close(fsdev_fd)
         time.sleep(1)
 
-def main():
-    """Command line"""
+def _parser():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("-s", "--serial", help="Serial number of device to program")
     parser.add_argument("firmware", help="Intel Hex format file to flash")
-    args = parser.parse_args()
+    return parser
+
+def main():
+    """Command line"""
+    args = _parser().parse_args()
 
     try:
         reset(

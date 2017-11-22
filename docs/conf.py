@@ -19,6 +19,9 @@
 #
 import os
 import sys
+from unittest.mock import Mock
+sys.modules['hid'] = Mock()
+sys.modules['PyCRC.CRCCCITT'] = Mock()
 sys.path.insert(0, os.path.abspath('..'))
 
 

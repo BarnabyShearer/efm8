@@ -1,5 +1,5 @@
-.. autoprogram:: efm8_read:_parser()
-   :prog: efm8_read.py
+.. autoprogram:: efm8.__main__:_parser()
+   :prog: efm8_read
 
 ----------
 

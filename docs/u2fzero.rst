@@ -1,5 +1,5 @@
-.. autoprogram:: u2fzero:_parser()
-   :prog: u2fzero.py
+.. autoprogram:: efm8.u2fzero:_parser()
+   :prog: u2fzero
 
 ----------
 

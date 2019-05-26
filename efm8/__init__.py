@@ -38,15 +38,12 @@ RUN = 0x36
 
 class Unsupported(IOError):
     """Input file not understood"""
-    pass
 
 class BadChecksum(IOError):
     """Checksum mismatch"""
-    pass
 
 class BadResponse(IOError):
     """Command not confirmed"""
-    pass
 
 def twos_complement(input_value, num_bits=8):
     """Calculates the unsigned int which binary matches the two's complement of the input"""
@@ -144,8 +141,7 @@ def flash(manufacturer, product, serial, frames):
             if report[-1] != 64:
                 if frame[2] == VERIFY:
                     raise BadChecksum()
-                else:
-                    raise BadResponse()
+                raise BadResponse()
 
 def read_flash(manufacturer, product, serial, length):
     """Exploit CRC to read back firmware"""

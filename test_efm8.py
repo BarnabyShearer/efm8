@@ -57,5 +57,5 @@ def test_not_intel():
     """Common user error"""
     with pytest.raises(efm8.Unsupported):
         efm8.read_intel_hex(
-            "efm8.py"
+            "setup.py"
         )

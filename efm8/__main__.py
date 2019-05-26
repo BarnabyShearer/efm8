@@ -23,74 +23,51 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Reset a `U2F ZERO <https://www.u2fzero.com/>`__ and flashs a new firmware."""
+"""Flash via AN945: EFM8 Factory Bootloader HID"""
 
 from __future__ import print_function
-import os
-import fcntl
 import argparse
-import contextlib
-import time
-import hid
 import efm8
 
-U2F_CONFIG_BOOTLOADER = 0x88
-USBDEVFS_RESET = ord("U") << (4*2) | 20
-
-def reset(manufacturer, product, serial):
-    """Send zeroU2F jump to bootloader command, then triggers the host to see the device change."""
-    #pylint: disable-msg=no-member
-    with contextlib.closing(hid.device()) as dev:
-        if hasattr(serial, "decode"):
-            serial = serial.decode("ascii")
-        dev.open(manufacturer, product, serial)
-        print("Jumping to bootloader (LED should go out)")
-        dev.write([0, U2F_CONFIG_BOOTLOADER])
-        dev.write([0, 0xff, 0xff, 0xff, 0xff, U2F_CONFIG_BOOTLOADER])
-    #Force host to detect the changed device
-    for dev in hid.enumerate(manufacturer, product):
-        path = dev["path"]
-        if hasattr(path, "decode"):
-            path = path.decode("ascii")
-        path = path.split(":")
-        path = "/dev/bus/usb/%03d/%03d" % (int(path[0], 16), int(path[1], 16))
-        print("Resetting", path)
-        fsdev_fd = os.open(path, os.O_WRONLY)
-        try:
-            fcntl.ioctl(fsdev_fd, USBDEVFS_RESET, 0)
-        except IOError: #always returns "No such device" even if it has worked
-            pass
-        finally:
-            os.close(fsdev_fd)
-        time.sleep(1)
 
 def _parser():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "-p", "--product", help="USB Product ID of device to program",
+        default="EAC9"
+    )
     parser.add_argument("-s", "--serial", help="Serial number of device to program")
     parser.add_argument("firmware", help="Intel Hex format file to flash")
     return parser
 
+
 def main():
     """Command line"""
     args = _parser().parse_args()
-
-    try:
-        reset(
-            0x10C4,
-            0x8ACF,
-            args.serial
-        )
-    except IOError: #maybe we already were in bootloader
-        pass
     efm8.flash(
         0x10C4,
-        0xEAC9,
+        int(args.product, 16),
         args.serial,
         efm8.to_frames(
             efm8.read_intel_hex(
                 args.firmware
             )
         )
+    )
+
+def read():
+    """Command line"""
+    parser = _parser()
+    parser.add_argument("-l", "--length", help="Length to read", default="0x4000")
+    args = parser.parse_args()
+    efm8.write_hex(
+        efm8.read_flash(
+            0x10C4,
+            int(args.product, 16),
+            args.serial,
+            int(args.length, 16)
+        ),
+        args.firmware
     )
 
 if __name__ == "__main__":

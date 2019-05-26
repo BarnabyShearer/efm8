@@ -7,7 +7,7 @@ with open(path.join(path.abspath(path.dirname(__file__)), 'README.rst')) as f:
 
 setup(
     name="efm8",
-    version="0.0.2",
+    version="0.0.3",
     description="Flash via AN945: EFM8 Factory Bootloader HID",
     long_description=long_description,
     author="Barnaby Shearer",
@@ -15,11 +15,16 @@ setup(
     url="https://github.com/BarnabyShearer/efm8.git",
     license='BSD',
     keywords="EFM8 AN945 HID Bootloader",
-    scripts=[
-        "efm8.py",
-        "u2fzero.py",
-        "efm8_read.py"
+    packages=[
+        "efm8"
     ],
+    entry_points={
+        "console_scripts": [
+            "efm8 = efm8.__main__:main",
+            "efm8_read = efm8.__main__:read",
+            "u2fzero = efm8.u2fzero:main",
+        ]
+    },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Environment :: Console",

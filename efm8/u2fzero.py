@@ -22,65 +22,54 @@
 # ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
 """
-Read flash via AN945: EFM8 Factory Bootloader HID
-
-Note the is no read command, instead we naively brute-force the VERIFY checksum; takes about 12min
+Extra utils for U2F-Zero devices
 """
-
-from __future__ import print_function, division
-import sys
-import contextlib
+from __future__ import print_function
+import os
 import argparse
-import efm8
+import fcntl
+import contextlib
+import time
 import hid
+import efm8
 
-SIZE = 0x4000 #16Kb
+U2F_CONFIG_BOOTLOADER = 0x88
+USBDEVFS_RESET = ord("U") << (4*2) | 20
 
-def read_flash(manufacturer, product, serial):
-    """Exploit CRC to read back firmware"""
+def reset(manufacturer, product, serial):
+    """Send zeroU2F jump to bootloader command, then triggers the host to see the device change."""
     #pylint: disable-msg=no-member
     with contextlib.closing(hid.device()) as dev:
         if hasattr(serial, "decode"):
             serial = serial.decode("ascii")
         dev.open(manufacturer, product, serial)
-        dev.send_feature_report([0] + efm8.create_frame(efm8.SETUP, [0xa5, 0xf1, 0x00]))
-        buf = []
-        for addr in range(SIZE):
-            if addr % 128 == 0:
-                print("%fkB" % (addr / 0x400))
-                sys.stdout.flush()
-            for test in range(0x100):
-                dev.send_feature_report([0] + efm8.create_frame(
-                    efm8.VERIFY,
-                    efm8.toaddr(addr) + efm8.toaddr(addr) + efm8.crc([test])
-                ))
-                if dev.get_feature_report(0, 2)[-1] == 64:
-                    buf.append(test)
-                    break
-                if test == 0xFF:
-                    raise efm8.BadResponse("No posible CRC matches")
-    return buf
-
-def write_hex(buf, filename):
-    """Write an Intel Format Hex file"""
-    with open(filename, "w") as output:
-        output.write(":020000040000FA\n")
-        for addr in range(0, SIZE, 16):
-            output.write(":10{:04X}00".format(addr))
-            output.write("".join("{:02X}".format(c) for c in buf[addr:addr + 16]))
-            output.write(
-                "{:02X}\n".format(
-                    efm8.twos_complement(
-                        sum([0x10] + efm8.toaddr(addr) + buf[addr:addr + 16]) & 0xFF
-                    )
-                )
-            )
-        output.write(":00000001FF\n")
+        print("Jumping to bootloader (LED should go out)")
+        dev.write([0, U2F_CONFIG_BOOTLOADER])
+        dev.write([0, 0xff, 0xff, 0xff, 0xff, U2F_CONFIG_BOOTLOADER])
+    #Force host to detect the changed device
+    for dev in hid.enumerate(manufacturer, product):
+        path = dev["path"]
+        if hasattr(path, "decode"):
+            path = path.decode("ascii")
+        path = path.split(":")
+        path = "/dev/bus/usb/%03d/%03d" % (int(path[0], 16), int(path[1], 16))
+        print("Resetting", path)
+        fsdev_fd = os.open(path, os.O_WRONLY)
+        try:
+            fcntl.ioctl(fsdev_fd, USBDEVFS_RESET, 0)
+        except IOError: #always returns "No such device" even if it has worked
+            pass
+        finally:
+            os.close(fsdev_fd)
+        time.sleep(1)
 
 def _parser():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "-p", "--product", help="USB Product ID of device to program",
+        default="EAC9"
+    )
     parser.add_argument("-s", "--serial", help="Serial number of device to program")
     parser.add_argument("firmware", help="Intel Hex format file to flash")
     return parser
@@ -88,15 +77,25 @@ def _parser():
 def main():
     """Command line"""
     args = _parser().parse_args()
-    write_hex(
-        read_flash(
-            0x10C4,
-            0xEAC9,
-            args.serial
-        ),
-        args.firmware
-    )
 
+    try:
+        reset(
+            0x10C4,
+            0x8ACF,
+            args.serial
+        )
+    except IOError: #maybe we already were in bootloader
+        pass
+    efm8.flash(
+        0x10C4,
+        int(args.product, 16),
+        args.serial,
+        efm8.to_frames(
+            efm8.read_intel_hex(
+                args.firmware
+            )
+        )
+    )
 
 if __name__ == "__main__":
     main()

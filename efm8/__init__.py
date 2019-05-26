@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 #
 # Copyright (c) 2017, Barnaby <b@zi.is>
 # All rights reserved.
@@ -28,7 +27,6 @@
 from __future__ import print_function
 import sys
 import contextlib
-import argparse
 import hid
 from PyCRC.CRCCCITT import CRCCCITT
 
@@ -87,8 +85,11 @@ def read_intel_hex(filename):
                 break
             if line[7:9] != "00":
                 raise Unsupported("We only cope with very simple HEX files")
-            if int(line[3:7], 16) != address:
+            if int(line[3:7], 16) < address:
                 raise Unsupported("We conly cope with liner HEX files")
+            # Zero pad gaps
+            data += [0] * (int(line[3:7], 16) - address)
+            address = int(line[3:7], 16)
             length = 9 + int(line[1:3], 16) * 2 #input chars
             if int(line[length:length + 2], 16) != twos_complement(
                     sum([int(line[x:x + 2], 16) for x in range(1, length, 2)]) & 0xFF
@@ -146,25 +147,43 @@ def flash(manufacturer, product, serial, frames):
                 else:
                     raise BadResponse()
 
-def _parser():
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("-s", "--serial", help="Serial number of device to program")
-    parser.add_argument("firmware", help="Intel Hex format file to flash")
-    return parser
+def read_flash(manufacturer, product, serial, length):
+    """Exploit CRC to read back firmware"""
+    #pylint: disable-msg=no-member
+    with contextlib.closing(hid.device()) as dev:
+        if hasattr(serial, "decode"):
+            serial = serial.decode("ascii")
+        dev.open(manufacturer, product, serial)
+        dev.send_feature_report([0] + create_frame(SETUP, [0xa5, 0xf1, 0x00]))
+        buf = []
+        for addr in range(length):
+            if addr % 128 == 0:
+                print("%fkB" % (addr / 0x400))
+                sys.stdout.flush()
+            for test in range(0x100):
+                dev.send_feature_report([0] + create_frame(
+                    VERIFY,
+                    toaddr(addr) + toaddr(addr) + crc([test])
+                ))
+                if dev.get_feature_report(0, 2)[-1] == 64:
+                    buf.append(test)
+                    break
+                if test == 0xFF:
+                    raise BadResponse("No posible CRC matches")
+    return buf
 
-def main():
-    """Command line"""
-    args = _parser().parse_args()
-    flash(
-        0x10C4,
-        0xEAC9,
-        args.serial,
-        to_frames(
-            read_intel_hex(
-                args.firmware
+def write_hex(buf, filename):
+    """Write an Intel Format Hex file"""
+    with open(filename, "w") as output:
+        output.write(":020000040000FA\n")
+        for addr in range(0, len(buf), 16):
+            output.write(":10{:04X}00".format(addr))
+            output.write("".join("{:02X}".format(c) for c in buf[addr:addr + 16]))
+            output.write(
+                "{:02X}\n".format(
+                    twos_complement(
+                        sum([0x10] + toaddr(addr) + buf[addr:addr + 16]) & 0xFF
+                    )
+                )
             )
-        )
-    )
-
-if __name__ == "__main__":
-    main()
+        output.write(":00000001FF\n")

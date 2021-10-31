@@ -1,9 +1,6 @@
 EFM8
 ====
 
-.. image:: https://travis-ci.org/BarnabyShearer/efm8.svg?branch=master
-    :target: https://travis-ci.org/BarnabyShearer/efm8
-
 .. image:: https://readthedocs.org/projects/efm8/badge/?version=latest
     :target: http://efm8.readthedocs.io/en/latest/?badge=latest
 

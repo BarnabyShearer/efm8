@@ -32,13 +32,15 @@ import argparse
 import efm8
 
 
-def _parser():
+def _parser(read=False):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "-p", "--product", help="USB Product ID of device to program", default="EAC9"
     )
     parser.add_argument("-s", "--serial", help="Serial number of device to program")
     parser.add_argument("firmware", help="Intel Hex format file to flash")
+    if read:
+        parser.add_argument("-l", "--length", help="Length to read", default="0x4000")
     return parser
 
 
@@ -55,8 +57,7 @@ def main():
 
 def read():
     """Command line."""
-    parser = _parser()
-    parser.add_argument("-l", "--length", help="Length to read", default="0x4000")
+    parser = _parser(True)
     args = parser.parse_args()
     efm8.write_hex(
         efm8.read_flash(

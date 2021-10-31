@@ -15,3 +15,5 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - run: pip install tox tox-gh-actions
     - run: tox
+      env:
+        LANG: en_US.UTF-8

@@ -22,11 +22,13 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Flash via AN945: EFM8 Factory Bootloader HID"""
+"""Flash via AN945: EFM8 Factory Bootloader HID."""
 
 from __future__ import print_function
-import sys
+
 import contextlib
+import sys
+
 import hid
 from PyCRC.CRCCCITT import CRCCCITT
 
@@ -36,49 +38,55 @@ WRITE = 0x33
 VERIFY = 0x34
 RUN = 0x36
 
+
 class Unsupported(IOError):
-    """Input file not understood"""
+    """Input file not understood."""
+
 
 class BadChecksum(IOError):
-    """Checksum mismatch"""
+    """Checksum mismatch."""
+
 
 class BadResponse(IOError):
-    """Command not confirmed"""
+    """Command not confirmed."""
+
 
 def twos_complement(input_value, num_bits=8):
-    """Calculates the unsigned int which binary matches the two's complement of the input"""
-    mask = 2**(num_bits - 1)
+    """Calculate unsigned int which binary matches the two's complement of the input."""
+    mask = 2 ** (num_bits - 1)
     return ((input_value & mask) - (input_value & ~mask)) & ((2 ** num_bits) - 1)
 
+
 def toaddr(addr):
-    """Split a 16bit address into two bytes (dosn't check it is a 16bit address ;-)"""
+    """Split a 16bit address into two bytes (dosn't check it is a 16bit address ;-)."""
     return [addr >> 8, addr & 0xFF]
 
+
 def crc(data):
-    """CITT-16, XModem"""
+    """CITT-16, XModem."""
     buf = "".join(map(chr, data)) if sys.version_info < (3, 0) else bytes(data)
     ret = CRCCCITT().calculate(buf)
     return [ret >> 8, ret & 0xFF]
 
+
 def create_frame(cmd, data):
-    """Bootloader frames start with '$', 1 byte length, 1 byte command, x bytes data"""
-    return [
-        ord("$"),
-        1 + len(data),
-        cmd
-    ] + data
+    """Bootloader frames start with '$', 1 byte length, 1 byte command, x bytes data."""
+    return [ord("$"), 1 + len(data), cmd] + data
+
 
 def read_intel_hex(filename):
-    """Read simple Intel format Hex files into byte array"""
+    """Read simple Intel format Hex files into byte array."""
     data = []
     address = 0
     with open(filename) as hexfile:
         for line in hexfile.readlines():
             if line[0] != ":":
                 continue
-            if line.startswith(":020000040000FA"): #Confirms default Extended linear Address
+            if line.startswith(
+                ":020000040000FA"
+            ):  # Confirms default Extended linear Address
                 continue
-            if line.startswith(":00000001FF"): #EOF
+            if line.startswith(":00000001FF"):  # EOF
                 break
             if line[7:9] != "00":
                 raise Unsupported("We only cope with very simple HEX files")
@@ -87,45 +95,42 @@ def read_intel_hex(filename):
             # Zero pad gaps
             data += [0] * (int(line[3:7], 16) - address)
             address = int(line[3:7], 16)
-            length = 9 + int(line[1:3], 16) * 2 #input chars
-            if int(line[length:length + 2], 16) != twos_complement(
-                    sum([int(line[x:x + 2], 16) for x in range(1, length, 2)]) & 0xFF
+            length = 9 + int(line[1:3], 16) * 2  # input chars
+            if int(line[length : length + 2], 16) != twos_complement(
+                sum([int(line[x : x + 2], 16) for x in range(1, length, 2)]) & 0xFF
             ):
                 raise BadChecksum()
             address += int(line[1:3], 16)
-            data += [int(line[x:x + 2], 16) for x in range(9, length, 2)]
+            data += [int(line[x : x + 2], 16) for x in range(9, length, 2)]
     if data == []:
         raise Unsupported("No Intel HEX lines found")
     return data
 
-def to_frames(data, checksum=True, run=True):
-    """Convert firmware byte array into sequence of bootloader frames"""
-    data_zero = data[0]
-    data[0] = 0xFF #Ensure we don't boot a half-written firmware
 
-    frames = [create_frame(SETUP, [0xa5, 0xf1, 0x00])]
+def to_frames(data, checksum=True, run=True):
+    """Convert firmware byte array into sequence of bootloader frames."""
+    data_zero = data[0]
+    data[0] = 0xFF  # Ensure we don't boot a half-written firmware
+
+    frames = [create_frame(SETUP, [0xA5, 0xF1, 0x00])]
     for addr in range(0, len(data), 128):
         frames.append(
             create_frame(
                 ERASE if addr % 0x200 == 0 else WRITE,
-                toaddr(addr) + data[addr: addr + 128]
+                toaddr(addr) + data[addr : addr + 128],
             )
         )
     if checksum:
-        frames.append(
-            create_frame(
-                VERIFY,
-                [0, 0] + toaddr(len(data)-1) + crc(data)
-            )
-        )
+        frames.append(create_frame(VERIFY, [0, 0] + toaddr(len(data) - 1) + crc(data)))
     frames.append(create_frame(WRITE, [0, 0, data_zero]))
     if run:
         frames.append(create_frame(RUN, [0, 0]))
     return frames
 
+
 def flash(manufacturer, product, serial, frames):
-    """Send bootloader frames over HID, and check confirmations"""
-    #pylint: disable-msg=no-member
+    """Send bootloader frames over HID, and check confirmations."""
+    # pylint: disable-msg=no-member
     with contextlib.closing(hid.device()) as dev:
         if hasattr(serial, "decode"):
             serial = serial.decode("ascii")
@@ -135,7 +140,7 @@ def flash(manufacturer, product, serial, frames):
         for frame in frames:
             print("$", " ".join("{:02X}".format(c) for c in frame[1:9]), end=" > ")
             for off in range(0, len(frame), 64):
-                dev.send_feature_report([0] + frame[off:off + 64])
+                dev.send_feature_report([0] + frame[off : off + 64])
             report = dev.get_feature_report(0, 2)
             print(chr(report[-1]))
             if report[-1] != 64:
@@ -143,24 +148,25 @@ def flash(manufacturer, product, serial, frames):
                     raise BadChecksum()
                 raise BadResponse()
 
+
 def read_flash(manufacturer, product, serial, length):
-    """Exploit CRC to read back firmware"""
-    #pylint: disable-msg=no-member
+    """Exploit CRC to read back firmware."""
+    # pylint: disable-msg=no-member
     with contextlib.closing(hid.device()) as dev:
         if hasattr(serial, "decode"):
             serial = serial.decode("ascii")
         dev.open(manufacturer, product, serial)
-        dev.send_feature_report([0] + create_frame(SETUP, [0xa5, 0xf1, 0x00]))
+        dev.send_feature_report([0] + create_frame(SETUP, [0xA5, 0xF1, 0x00]))
         buf = []
         for addr in range(length):
             if addr % 128 == 0:
                 print("%fkB" % (addr / 0x400))
                 sys.stdout.flush()
             for test in range(0x100):
-                dev.send_feature_report([0] + create_frame(
-                    VERIFY,
-                    toaddr(addr) + toaddr(addr) + crc([test])
-                ))
+                dev.send_feature_report(
+                    [0]
+                    + create_frame(VERIFY, toaddr(addr) + toaddr(addr) + crc([test]))
+                )
                 if dev.get_feature_report(0, 2)[-1] == 64:
                     buf.append(test)
                     break
@@ -168,17 +174,18 @@ def read_flash(manufacturer, product, serial, length):
                     raise BadResponse("No posible CRC matches")
     return buf
 
+
 def write_hex(buf, filename):
-    """Write an Intel Format Hex file"""
+    """Write an Intel Format Hex file."""
     with open(filename, "w") as output:
         output.write(":020000040000FA\n")
         for addr in range(0, len(buf), 16):
             output.write(":10{:04X}00".format(addr))
-            output.write("".join("{:02X}".format(c) for c in buf[addr:addr + 16]))
+            output.write("".join("{:02X}".format(c) for c in buf[addr : addr + 16]))
             output.write(
                 "{:02X}\n".format(
                     twos_complement(
-                        sum([0x10] + toaddr(addr) + buf[addr:addr + 16]) & 0xFF
+                        sum([0x10] + toaddr(addr) + buf[addr : addr + 16]) & 0xFF
                     )
                 )
             )

@@ -23,18 +23,19 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"""Flash via AN945: EFM8 Factory Bootloader HID"""
+"""Flash via AN945: EFM8 Factory Bootloader HID."""
 
 from __future__ import print_function
+
 import argparse
+
 import efm8
 
 
 def _parser():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "-p", "--product", help="USB Product ID of device to program",
-        default="EAC9"
+        "-p", "--product", help="USB Product ID of device to program", default="EAC9"
     )
     parser.add_argument("-s", "--serial", help="Serial number of device to program")
     parser.add_argument("firmware", help="Intel Hex format file to flash")
@@ -42,33 +43,28 @@ def _parser():
 
 
 def main():
-    """Command line"""
+    """Command line."""
     args = _parser().parse_args()
     efm8.flash(
         0x10C4,
         int(args.product, 16),
         args.serial,
-        efm8.to_frames(
-            efm8.read_intel_hex(
-                args.firmware
-            )
-        )
+        efm8.to_frames(efm8.read_intel_hex(args.firmware)),
     )
 
+
 def read():
-    """Command line"""
+    """Command line."""
     parser = _parser()
     parser.add_argument("-l", "--length", help="Length to read", default="0x4000")
     args = parser.parse_args()
     efm8.write_hex(
         efm8.read_flash(
-            0x10C4,
-            int(args.product, 16),
-            args.serial,
-            int(args.length, 16)
+            0x10C4, int(args.product, 16), args.serial, int(args.length, 16)
         ),
-        args.firmware
+        args.firmware,
     )
+
 
 if __name__ == "__main__":
     main()

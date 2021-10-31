@@ -59,6 +59,8 @@ commands =
 [testenv:py27]
 deps =
     pytest
+    coverage[toml]
 commands =
-    python -m pytest
+    coverage run
+    coverage report --fail-under=50
 """

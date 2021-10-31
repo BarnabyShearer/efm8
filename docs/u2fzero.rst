@@ -3,5 +3,5 @@
 
 ----------
 
-.. automodule:: u2fzero
+.. automodule:: efm8.u2fzero
    :members:

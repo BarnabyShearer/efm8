@@ -1,2 +1,2 @@
 sphinxcontrib-autoprogram
-docutils<0.19
+docutils<0.18

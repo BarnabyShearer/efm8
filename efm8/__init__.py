@@ -28,9 +28,10 @@ from __future__ import print_function
 
 import contextlib
 import sys
+from typing import List, Union  # noqa: F401
 
-import hid
-from PyCRC.CRCCCITT import CRCCCITT
+import hid  # type: ignore
+from PyCRC.CRCCCITT import CRCCCITT  # type: ignore
 
 SETUP = 0x31
 ERASE = 0x32
@@ -52,17 +53,20 @@ class BadResponse(IOError):
 
 
 def twos_complement(input_value, num_bits=8):
+    # Type: (int, int) -> int
     """Calculate unsigned int which binary matches the two's complement of the input."""
     mask = 2 ** (num_bits - 1)
     return ((input_value & mask) - (input_value & ~mask)) & ((2 ** num_bits) - 1)
 
 
 def toaddr(addr):
+    # Type: (int) -> List[int]
     """Split a 16bit address into two bytes (dosn't check it is a 16bit address ;-)."""
     return [addr >> 8, addr & 0xFF]
 
 
 def crc(data):
+    # Type: (List[int]) -> List[int]
     """CITT-16, XModem."""
     buf = "".join(map(chr, data)) if sys.version_info < (3, 0) else bytes(data)
     ret = CRCCCITT().calculate(buf)
@@ -70,11 +74,13 @@ def crc(data):
 
 
 def create_frame(cmd, data):
+    # Type: (int, List[int]) -> List[int]
     """Bootloader frames start with '$', 1 byte length, 1 byte command, x bytes data."""
     return [ord("$"), 1 + len(data), cmd] + data
 
 
 def read_intel_hex(filename):
+    # Type: (str) -> List[int]
     """Read simple Intel format Hex files into byte array."""
     data = []
     address = 0
@@ -108,6 +114,7 @@ def read_intel_hex(filename):
 
 
 def to_frames(data, checksum=True, run=True):
+    # Type: (List[int], bool, bool) -> List[List[int]]
     """Convert firmware byte array into sequence of bootloader frames."""
     data_zero = data[0]
     data[0] = 0xFF  # Ensure we don't boot a half-written firmware
@@ -129,11 +136,11 @@ def to_frames(data, checksum=True, run=True):
 
 
 def flash(manufacturer, product, serial, frames):
+    # Type: (int, int, Union[str, bytes], List[List[int]]) -> None
     """Send bootloader frames over HID, and check confirmations."""
-    # pylint: disable-msg=no-member
     with contextlib.closing(hid.device()) as dev:
-        if hasattr(serial, "decode"):
-            serial = serial.decode("ascii")
+        if hasattr(serial, "decode"):  # pragma: no cover
+            serial = serial.decode("ascii")  # type: ignore
         dev.open(manufacturer, product, serial)
         print("Download over port: HID:%X:%X" % (manufacturer, product))
         print()
@@ -150,11 +157,11 @@ def flash(manufacturer, product, serial, frames):
 
 
 def read_flash(manufacturer, product, serial, length):
+    # Type: (int, int, Union[str, bytes], int) -> List[int]
     """Exploit CRC to read back firmware."""
-    # pylint: disable-msg=no-member
     with contextlib.closing(hid.device()) as dev:
-        if hasattr(serial, "decode"):
-            serial = serial.decode("ascii")
+        if hasattr(serial, "decode"):  # pragma: no cover
+            serial = serial.decode("ascii")  # type: ignore
         dev.open(manufacturer, product, serial)
         dev.send_feature_report([0] + create_frame(SETUP, [0xA5, 0xF1, 0x00]))
         buf = []
@@ -162,7 +169,7 @@ def read_flash(manufacturer, product, serial, length):
             if addr % 128 == 0:
                 print("%fkB" % (addr / 0x400))
                 sys.stdout.flush()
-            for test in range(0x100):
+            for test in range(0x100):  # pragma: no branch
                 dev.send_feature_report(
                     [0]
                     + create_frame(VERIFY, toaddr(addr) + toaddr(addr) + crc([test]))
@@ -176,6 +183,7 @@ def read_flash(manufacturer, product, serial, length):
 
 
 def write_hex(buf, filename):
+    # Type: (List[int], str) -> None
     """Write an Intel Format Hex file."""
     with open(filename, "w") as output:
         output.write(":020000040000FA\n")

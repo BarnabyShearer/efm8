@@ -5,3 +5,5 @@
 /.cache
 /*.hex
 docs/_build/
+.coverage
+.tox

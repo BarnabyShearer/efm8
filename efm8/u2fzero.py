@@ -23,6 +23,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 """Extra utils for U2F-Zero devices."""
+
 from __future__ import print_function
 
 import argparse
@@ -30,8 +31,9 @@ import contextlib
 import fcntl
 import os
 import time
+from typing import Union  # noqa: F401
 
-import hid
+import hid  # type: ignore
 
 import efm8
 
@@ -40,17 +42,17 @@ USBDEVFS_RESET = ord("U") << (4 * 2) | 20
 
 
 def reset(manufacturer, product, serial):
+    # Type: (int, int, Union[str, bytes]) -> None
     """Send zeroU2F jump to bootloader, trigger the host to see the device change."""
-    # pylint: disable-msg=no-member
     with contextlib.closing(hid.device()) as dev:
-        if hasattr(serial, "decode"):
-            serial = serial.decode("ascii")
+        if hasattr(serial, "decode"):  # pragma: no cover
+            serial = serial.decode("ascii")  # type: ignore
         dev.open(manufacturer, product, serial)
         print("Jumping to bootloader (LED should go out)")
         dev.write([0, U2F_CONFIG_BOOTLOADER])
         dev.write([0, 0xFF, 0xFF, 0xFF, 0xFF, U2F_CONFIG_BOOTLOADER])
     # Force host to detect the changed device
-    for dev in hid.enumerate(manufacturer, product):
+    for dev in hid.enumerate(manufacturer, product):  # pragma: no cover
         path = dev["path"]
         if hasattr(path, "decode"):
             path = path.decode("ascii")
@@ -68,6 +70,7 @@ def reset(manufacturer, product, serial):
 
 
 def _parser():
+    # Type: () -> argparse.ArgumentParser
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "-p", "--product", help="USB Product ID of device to program", default="EAC9"
@@ -77,7 +80,8 @@ def _parser():
     return parser
 
 
-def main():
+def main():  # pragma: no cover
+    # Type: () -> None
     """Command line."""
     args = _parser().parse_args()
 
@@ -93,5 +97,5 @@ def main():
     )
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     main()

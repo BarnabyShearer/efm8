@@ -153,7 +153,7 @@ def test_flash_error(hid):
     hid.device().open.assert_called_once_with(1, 2, "3")
 
 
-@patch("efm8.hid", autospect=True)
+@patch("efm8.hid", autospec=True)
 def test_flash_checksum(hid):
     # type: (Mock) -> None
     """Check we handle a checksum-error case."""

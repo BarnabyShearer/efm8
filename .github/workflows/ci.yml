@@ -22,6 +22,6 @@ jobs:
     - uses: actions/setup-python@v2
       with:
         python-version: 2.7
-    - run: pip install mock pytest coverage[toml]
+    - run: pip install mock pytest coverage[toml] .
     - run: coverage run
     - run: coverage report --fail-under=100

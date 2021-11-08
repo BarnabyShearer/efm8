@@ -42,7 +42,7 @@ USBDEVFS_RESET = ord("U") << (4 * 2) | 20
 
 
 def reset(manufacturer, product, serial):
-    # Type: (int, int, Union[str, bytes]) -> None
+    # type: (int, int, Union[str, bytes]) -> None
     """Send zeroU2F jump to bootloader, trigger the host to see the device change."""
     with contextlib.closing(hid.device()) as dev:
         if hasattr(serial, "decode"):  # pragma: no cover
@@ -70,7 +70,7 @@ def reset(manufacturer, product, serial):
 
 
 def _parser():
-    # Type: () -> argparse.ArgumentParser
+    # type: () -> argparse.ArgumentParser
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "-p", "--product", help="USB Product ID of device to program", default="EAC9"
@@ -81,7 +81,7 @@ def _parser():
 
 
 def main():  # pragma: no cover
-    # Type: () -> None
+    # type: () -> None
     """Command line."""
     args = _parser().parse_args()
 

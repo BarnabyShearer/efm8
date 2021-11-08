@@ -33,7 +33,7 @@ import efm8
 
 
 def _parser(read=False):
-    # Type: (bool) -> argparse.ArgumentParser
+    # type: (bool) -> argparse.ArgumentParser
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "-p", "--product", help="USB Product ID of device to program", default="EAC9"
@@ -46,7 +46,7 @@ def _parser(read=False):
 
 
 def main():  # pragma: no cover
-    # Type: () -> None
+    # type: () -> None
     """Command line."""
     args = _parser().parse_args()
     efm8.flash(
@@ -58,7 +58,7 @@ def main():  # pragma: no cover
 
 
 def read():  # pragma: no cover
-    # Type: () -> None
+    # type: () -> None
     """Command line."""
     parser = _parser(True)
     args = parser.parse_args()

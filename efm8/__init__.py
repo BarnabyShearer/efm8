@@ -53,20 +53,21 @@ class BadResponse(IOError):
 
 
 def twos_complement(input_value, num_bits=8):
-    # Type: (int, int) -> int
+    # type: (int, int) -> int
     """Calculate unsigned int which binary matches the two's complement of the input."""
-    mask = 2 ** (num_bits - 1)
-    return ((input_value & mask) - (input_value & ~mask)) & ((2 ** num_bits) - 1)
+    mask = 2 ** (num_bits - 1)  # type: int
+    mask2 = (2 ** num_bits) - 1  # type: int
+    return ((input_value & mask) - (input_value & ~mask)) & mask2
 
 
 def toaddr(addr):
-    # Type: (int) -> List[int]
+    # type: (int) -> List[int]
     """Split a 16bit address into two bytes (dosn't check it is a 16bit address ;-)."""
     return [addr >> 8, addr & 0xFF]
 
 
 def crc(data):
-    # Type: (List[int]) -> List[int]
+    # type: (List[int]) -> List[int]
     """CITT-16, XModem."""
     buf = "".join(map(chr, data)) if sys.version_info < (3, 0) else bytes(data)
     ret = CRCCCITT().calculate(buf)
@@ -74,13 +75,13 @@ def crc(data):
 
 
 def create_frame(cmd, data):
-    # Type: (int, List[int]) -> List[int]
+    # type: (int, List[int]) -> List[int]
     """Bootloader frames start with '$', 1 byte length, 1 byte command, x bytes data."""
     return [ord("$"), 1 + len(data), cmd] + data
 
 
 def read_intel_hex(filename):
-    # Type: (str) -> List[int]
+    # type: (str) -> List[int]
     """Read simple Intel format Hex files into byte array."""
     data = []
     address = 0
@@ -114,7 +115,7 @@ def read_intel_hex(filename):
 
 
 def to_frames(data, checksum=True, run=True):
-    # Type: (List[int], bool, bool) -> List[List[int]]
+    # type: (List[int], bool, bool) -> List[List[int]]
     """Convert firmware byte array into sequence of bootloader frames."""
     data_zero = data[0]
     data[0] = 0xFF  # Ensure we don't boot a half-written firmware
@@ -136,7 +137,7 @@ def to_frames(data, checksum=True, run=True):
 
 
 def flash(manufacturer, product, serial, frames):
-    # Type: (int, int, Union[str, bytes], List[List[int]]) -> None
+    # type: (int, int, Union[str, bytes], List[List[int]]) -> None
     """Send bootloader frames over HID, and check confirmations."""
     with contextlib.closing(hid.device()) as dev:
         if hasattr(serial, "decode"):  # pragma: no cover
@@ -157,7 +158,7 @@ def flash(manufacturer, product, serial, frames):
 
 
 def read_flash(manufacturer, product, serial, length):
-    # Type: (int, int, Union[str, bytes], int) -> List[int]
+    # type: (int, int, Union[str, bytes], int) -> List[int]
     """Exploit CRC to read back firmware."""
     with contextlib.closing(hid.device()) as dev:
         if hasattr(serial, "decode"):  # pragma: no cover
@@ -183,7 +184,7 @@ def read_flash(manufacturer, product, serial, length):
 
 
 def write_hex(buf, filename):
-    # Type: (List[int], str) -> None
+    # type: (List[int], str) -> None
     """Write an Intel Format Hex file."""
     with open(filename, "w") as output:
         output.write(":020000040000FA\n")

@@ -3,9 +3,9 @@
 import sys
 
 try:
-    from unittest.mock import mock_open, patch
+    from unittest.mock import Mock, mock_open, patch
 except ImportError:  # pragma: no cover
-    from mock import patch, mock_open
+    from mock import patch, mock_open, Mock  # type: ignore
 
 import pytest
 
@@ -15,6 +15,7 @@ import efm8.u2fzero
 
 
 def test_twos():
+    # type: () -> None
     """Test exepcted outputs."""
     assert efm8.twos_complement(0xE2) == 0x1E
     assert efm8.twos_complement(0xFF) == 0x01
@@ -23,6 +24,7 @@ def test_twos():
 
 
 def test_toaddr():
+    # type: () -> None
     """Test exepcted outputs."""
     assert efm8.toaddr(0xFFFF) == [0xFF, 0xFF]
     assert efm8.toaddr(0x0102) == [0x01, 0x02]
@@ -30,12 +32,14 @@ def test_toaddr():
 
 
 def test_crc():
+    # type: () -> None
     """Test exepcted outputs."""
-    assert efm8.crc(range(255)) == [5, 48]
+    assert efm8.crc(list(range(255))) == [5, 48]
     assert efm8.crc([]) == [0, 0]
 
 
 def test_simple():
+    # type: () -> None
     """Simplest output."""
     assert efm8.to_frames([0], False, False) == [
         [36, 4, 49, 165, 241, 0],
@@ -45,6 +49,7 @@ def test_simple():
 
 
 def test_good():
+    # type: () -> None
     """Nothing to see here."""
     assert efm8.to_frames(efm8.read_intel_hex("tests/good.hex")) == [
         [36, 4, 49, 165, 241, 0],
@@ -94,46 +99,53 @@ def test_good():
 
 
 def test_bad_checksum():
+    # type: () -> None
     """We must not accept malformed-input."""
     with pytest.raises(efm8.BadChecksum):
         efm8.read_intel_hex("tests/bad_checksum.hex")
 
 
 def test_nonlinear():
+    # type: () -> None
     """Not implemented."""
     with pytest.raises(efm8.Unsupported):
         efm8.read_intel_hex("tests/nonlinear.hex")
 
 
 def test_not_intel():
+    # type: () -> None
     """Common user error."""
     with pytest.raises(efm8.Unsupported):
         efm8.read_intel_hex("README.rst")
 
 
 def test_not_empty():
+    # type: () -> None
     """Common user error."""
     with pytest.raises(efm8.Unsupported):
         efm8.read_intel_hex("tests/empty.hex")
 
 
-@patch("efm8.hid")
+@patch("efm8.hid", autospec=True)
 def test_flash_null(hid):
+    # type: (Mock) -> None
     """Check null edge-case."""
     efm8.flash(1, 2, "3", [])
     hid.device().open.assert_called_once_with(1, 2, "3")
 
 
-@patch("efm8.hid")
+@patch("efm8.hid", autospec=True)
 def test_flash(hid):
+    # type: (Mock) -> None
     """Check we happy case."""
     hid.device().get_feature_report.return_value = [64]
     efm8.flash(1, 2, "3", efm8.to_frames([0]))
     hid.device().open.assert_called_once_with(1, 2, "3")
 
 
-@patch("efm8.hid")
+@patch("efm8.hid", autospec=True)
 def test_flash_error(hid):
+    # type: (Mock) -> None
     """Check we handle a error case."""
     hid.device().get_feature_report.return_value = [0]
     with pytest.raises(efm8.BadResponse):
@@ -141,8 +153,9 @@ def test_flash_error(hid):
     hid.device().open.assert_called_once_with(1, 2, "3")
 
 
-@patch("efm8.hid")
+@patch("efm8.hid", autospec=True)
 def test_flash_checksum(hid):
+    # type: (Mock) -> None
     """Check we handle a checksum-error case."""
     hid.device().get_feature_report.side_effect = [[64], [64], [63]]
     with pytest.raises(efm8.BadChecksum):
@@ -150,15 +163,17 @@ def test_flash_checksum(hid):
     hid.device().open.assert_called_once_with(1, 2, "3")
 
 
-@patch("efm8.hid")
+@patch("efm8.hid", autospec=True)
 def test_read_flash_null(hid):
+    # type: (Mock) -> None
     """Check we call hid correctly."""
     efm8.read_flash(1, 2, "3", 0)
     hid.device().open.assert_called_once_with(1, 2, "3")
 
 
-@patch("efm8.hid")
+@patch("efm8.hid", autospec=True)
 def test_read_flash(hid):
+    # type: (Mock) -> None
     """Check we call hid correctly."""
     hid.device().get_feature_report.side_effect = [[64]] * 200 + [[63]] * 1000
     with pytest.raises(efm8.BadResponse):
@@ -167,6 +182,7 @@ def test_read_flash(hid):
 
 
 def test_write_hex():
+    # type: () -> None
     """Check we can output Intel hex."""
     with patch(
         "__builtin__.open" if sys.version_info[0] == 2 else "efm8.open", mock_open()
@@ -176,14 +192,16 @@ def test_write_hex():
 
 
 def test_main():
+    # type: () -> None
     """Check we can construct parser."""
     efm8_main._parser(True)
     efm8_main._parser(False)
     efm8.u2fzero._parser()
 
 
-@patch("efm8.u2fzero.hid")
+@patch("efm8.u2fzero.hid", autospec=True)
 def test_u2fzero_reset(hid):
+    # type: (Mock) -> None
     """Check u2fzero."""
     efm8.u2fzero.reset(0x10C4, 0x8ACF, "foo")
     hid.device().open.assert_called_with(0x10C4, 0x8ACF, "foo")

@@ -33,7 +33,7 @@ import os
 import time
 from typing import Union  # noqa: F401
 
-import hid  # type: ignore
+import hid
 
 import efm8
 
@@ -45,19 +45,14 @@ def reset(manufacturer, product, serial):
     # type: (int, int, Union[str, bytes]) -> None
     """Send zeroU2F jump to bootloader, trigger the host to see the device change."""
     with contextlib.closing(hid.device()) as dev:
-        if hasattr(serial, "decode"):  # pragma: no cover
-            serial = serial.decode("ascii")  # type: ignore
-        dev.open(manufacturer, product, serial)
+        dev.open(manufacturer, product, efm8.tostr(serial))
         print("Jumping to bootloader (LED should go out)")
         dev.write([0, U2F_CONFIG_BOOTLOADER])
         dev.write([0, 0xFF, 0xFF, 0xFF, 0xFF, U2F_CONFIG_BOOTLOADER])
     # Force host to detect the changed device
-    for dev in hid.enumerate(manufacturer, product):  # pragma: no cover
-        path = dev["path"]
-        if hasattr(path, "decode"):
-            path = path.decode("ascii")
-        path = path.split(":")
-        path = "/dev/bus/usb/%03d/%03d" % (int(path[0], 16), int(path[1], 16))
+    for devdict in hid.enumerate(manufacturer, product):  # pragma: no cover
+        paths = efm8.tostr(devdict["path"]).split(":")
+        path = "/dev/bus/usb/%03d/%03d" % (int(paths[0], 16), int(paths[1], 16))
         print("Resetting", path)
         fsdev_fd = os.open(path, os.O_WRONLY)
         try:

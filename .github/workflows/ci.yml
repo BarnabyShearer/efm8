@@ -7,11 +7,21 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: ['2.7', '3.7', '3.8', '3.9', '3.10']
+        python-version: ['3.7', '3.8', '3.9', '3.10']
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - run: pip install "tox<v3" tox-gh-actions
+    - run: pip install tox tox-gh-actions
     - run: tox
+  build-py27:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+      with:
+        python-version: 2.7
+    - run: pip install mock pytest coverage[toml]
+    - run: coverage run
+    - run: coverage report --fail-under=100

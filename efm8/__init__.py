@@ -57,7 +57,7 @@ def tostr(buf):
     """Ensure we have str across python versions."""
     if hasattr(buf, "decode"):  # pragma: no cover
         return buf.decode("ascii")  # type: ignore
-    return buf  # type: ignore
+    return buf  # type: ignore  # pragma: no cover
 
 
 def twos_complement(input_value, num_bits=8):

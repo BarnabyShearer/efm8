@@ -30,7 +30,7 @@ import contextlib
 import sys
 from typing import List, Union  # noqa: F401
 
-import hid  # type: ignore
+import hid
 from PyCRC.CRCCCITT import CRCCCITT  # type: ignore
 
 SETUP = 0x31
@@ -50,6 +50,14 @@ class BadChecksum(IOError):
 
 class BadResponse(IOError):
     """Command not confirmed."""
+
+
+def tostr(buf):
+    # type: (Union[str, bytes]) -> str
+    """Ensure we have str across python versions."""
+    if hasattr(buf, "decode"):  # pragma: no cover
+        return buf.decode("ascii")  # type: ignore
+    return buf  # type: ignore
 
 
 def twos_complement(input_value, num_bits=8):
@@ -140,9 +148,7 @@ def flash(manufacturer, product, serial, frames):
     # type: (int, int, Union[str, bytes], List[List[int]]) -> None
     """Send bootloader frames over HID, and check confirmations."""
     with contextlib.closing(hid.device()) as dev:
-        if hasattr(serial, "decode"):  # pragma: no cover
-            serial = serial.decode("ascii")  # type: ignore
-        dev.open(manufacturer, product, serial)
+        dev.open(manufacturer, product, tostr(serial))
         print("Download over port: HID:%X:%X" % (manufacturer, product))
         print()
         for frame in frames:
@@ -161,9 +167,7 @@ def read_flash(manufacturer, product, serial, length):
     # type: (int, int, Union[str, bytes], int) -> List[int]
     """Exploit CRC to read back firmware."""
     with contextlib.closing(hid.device()) as dev:
-        if hasattr(serial, "decode"):  # pragma: no cover
-            serial = serial.decode("ascii")  # type: ignore
-        dev.open(manufacturer, product, serial)
+        dev.open(manufacturer, product, tostr(serial))
         dev.send_feature_report([0] + create_frame(SETUP, [0xA5, 0xF1, 0x00]))
         buf = []
         for addr in range(length):

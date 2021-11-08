@@ -1,11 +1,12 @@
 [build-system]
-requires = ["setuptools", "wheel", "setuptools_scm>=6.2"]
+requires = ["setuptools", "wheel", "setuptools_scm"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools_scm]
 
 [tool.mypy]
 strict = true
+mypy_path = "$MYPY_CONFIG_FILE_DIR/types"
 
 [tool.isort]
 profile = "black"
@@ -53,8 +54,7 @@ deps =
 commands =
     black --check --diff .
     isort --check --diff .
-    mypy efm8
-    mypy --py2 efm8
+    mypy .
     pflake8 .
     coverage run
     coverage report --fail-under=100
@@ -65,5 +65,5 @@ deps =
     coverage[toml]
 commands =
     coverage run
-    coverage report --fail-under=50
+    coverage report --fail-under=100
 """

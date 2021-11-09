@@ -1,9 +1,9 @@
+
 *.py[oc]
 /build
 /dist
 *.egg-info
 /.cache
-/*.hex
 docs/_build/
 .coverage
 .tox

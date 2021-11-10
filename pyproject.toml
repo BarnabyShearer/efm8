@@ -25,12 +25,12 @@ omit = [".tox/*"]
 show_missing = true
 
 [tool.pytest.ini_options]
-addopts = "-p no:cacheprovider --doctest-modules -v tests"
+addopts = "-p no:cacheprovider --doctest-modules -v"
 
 [tool.tox]
 legacy_tox_ini = """
 [tox]
-isolated_build = True
+isolated_build = true
 envlist = py27,py3{7,8,9,10}
 
 [gh-actions]

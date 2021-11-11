@@ -3,8 +3,8 @@
 
 extensions = ["sphinxcontrib.autoprogram", "sphinx.ext.autodoc"]
 
-project = "EFM8 Bootloader"
-copyright = "2017, Barnaby Shearer"
+project = "Flash via AN945: EFM8 Factory Bootloader HID."
+copyright = "2021, Barnaby Shearer"
 author = "Barnaby Shearer"
 
 master_doc = "index"

@@ -1,6 +1,9 @@
 version: 2
 formats: all
 build:
+  os: ubuntu-20.04
+  tools:
+    python: "3.10"
   apt_packages:
   - libusb-1.0-0-dev
   - libudev-dev

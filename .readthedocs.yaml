@@ -1,5 +1,9 @@
 version: 2
 formats: all
+build:
+  apt_packages:
+  - libusb-1.0-0-dev
+  - libudev-dev
 python:
   install:
   - requirements: docs/requirements.txt

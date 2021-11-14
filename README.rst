@@ -2,7 +2,7 @@
 efm8
 ====
 .. image:: https://readthedocs.org/projects/efm8/badge/?version=latest
-    :target: http://efm8.readthedocs.io/en/latest/?badge=latest
+    :target: https://efm8.readthedocs.io/en/latest/?badge=latest
 
 .. image:: https://badge.fury.io/py/efm8.svg
     :target: https://badge.fury.io/py/efm8

@@ -1,13 +1,13 @@
-EFM8
 ====
-
+efm8
+====
 .. image:: https://readthedocs.org/projects/efm8/badge/?version=latest
     :target: http://efm8.readthedocs.io/en/latest/?badge=latest
 
 .. image:: https://badge.fury.io/py/efm8.svg
     :target: https://badge.fury.io/py/efm8
 
-Flash via AN945: EFM8 Factory Bootloader HID
+Flash via AN945: EFM8 Factory Bootloader HID.
 
 ::
 
@@ -26,3 +26,6 @@ And a way to (slowly) read the firmware back
 ::
 
     efm8_read firmware.hex
+
+
+

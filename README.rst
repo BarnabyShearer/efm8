@@ -2,17 +2,16 @@
 efm8
 ====
 .. image:: https://readthedocs.org/projects/efm8/badge/?version=latest
-    :target: https://efm8.readthedocs.io/en/latest/?badge=latest
-
-.. image:: https://badge.fury.io/py/efm8.svg
-    :target: https://badge.fury.io/py/efm8
+    :target: https://efm8.readthedocs.io/en/latest/
+.. image:: https://img.shields.io/pypi/v/efm8?color=success
+    :target: https://pypi.org/project/efm8
 
 Flash via AN945: EFM8 Factory Bootloader HID.
 
 Install
 -------
 
-::
+.. code-block:: bash
 
     sudo apt install libusb-1.0-0-dev libudev-dev
     python3 -m pip install efm8

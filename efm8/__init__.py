@@ -104,7 +104,9 @@ def read_intel_hex(filename):
             if line.startswith(":00000001FF"):  # EOF
                 break
             if line[7:9] != "00":
-                raise Unsupported("We only cope with very simple HEX files")
+                raise Unsupported(
+                    "We only cope with very simple HEX files"
+                )  # pragma: no cover
             if int(line[3:7], 16) < address:
                 raise Unsupported("We conly cope with liner HEX files")
             # Zero pad gaps

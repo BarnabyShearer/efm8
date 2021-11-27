@@ -10,24 +10,24 @@ Communication is over USB-HID. This is implemented via the `hidapi <https://gith
 
 On linux you can use udev to grant access:
 
-::
+.. code-block:: bash
 
     echo 'SUBSYSTEM=="usb", ATTRS{idVendor}=="10c4", MODE="0666"' | sudo tee /etc/udev/rules.d/70-silabs.rules
     udevadm trigger
 
-::
+.. code-block:: bash
 
     efm8 firmware.hex
 
 Also includes an example that resets a https://u2fzero.com/ into the bootloader and flashes in one command.
 
-::
+.. code-block:: bash
 
     u2fzero firmware.hex
 
 And a way to (slowly) read the firmware back
 
-::
+.. code-block:: bash
 
     efm8_read firmware.hex
 

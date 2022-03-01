@@ -64,7 +64,7 @@ def twos_complement(input_value, num_bits=8):
     # type: (int, int) -> int
     """Calculate unsigned int which binary matches the two's complement of the input."""
     mask = 2 ** (num_bits - 1)  # type: int
-    mask2 = (2 ** num_bits) - 1  # type: int
+    mask2 = (2**num_bits) - 1  # type: int
     return ((input_value & mask) - (input_value & ~mask)) & mask2
 
 
